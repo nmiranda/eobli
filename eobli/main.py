@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 #Seccion 1: Importacion
 #Importar las diferentes librerias necesarias para correr el programa
@@ -67,7 +68,7 @@ v21 = Toplevel(v20)
 v21.geometry("450x100")
 
 current = None
-kmeansindex = 1
+kmeansindex = 0
 
 # Seccion 3: Metodos
 
@@ -351,10 +352,17 @@ def ocultar(ventana):ventana.withdraw()
 def ejecutar(f): v0.after(200,f)
 def abrir(ventana):
 	if ventana is v2:
-		if list1.curselection():
-			pass
-		else:
+		if not list1.curselection():
 			tkMessageBox.showerror("Error de valores", "Escoja una bateria, jeje")
+			return
+		if not e11.get().strip():
+			tkMessageBox.showerror("Error de valores", "Escoja una potencia, jeje")
+			return
+		if not e12.get().strip():
+			tkMessageBox.showerror("Error de valores", "Escoja una energía, jeje")
+			return
+		if not e13.get().strip():
+			tkMessageBox.showerror("Error de valores", "Escoja un voltaje, jeje")
 			return
 	ventana.deiconify()
 
@@ -377,8 +385,6 @@ def cerrar2(ventana):
 #Esta funcion permite abrir la ventana de configuracion (ventiladores, geometria) del banco
 	
 def mostrar2(v11,v12,v13): 
-	print "JEJE AQUI SE MODIFICA CONFIGURACION"
-	import pdb; pdb.set_trace()
 	current = None
 	aa = poll3()
 	bb = poll4()
@@ -2493,7 +2499,7 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 	#abre el archivo donde se encuentra la libreria de celdas
 
 	aa = poll()
-	print aa 
+	#print aa 
 	v = ""+str(aa)
 	sel = list1.get(aa)
 
@@ -3049,7 +3055,6 @@ def correrModelo(ventana,configuracion):
 			limiteDown.append(1.05)	
 
 	#Eleccion de grilla o escalonado 	
-	import pdb; pdb.set_trace()
 	if configuracion == "grilla":
 		[repoFin,repoObjFin] =  modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limiteDown)
 		#print "repoFin" + str(repoFin)
@@ -3116,7 +3121,7 @@ def correrModelo(ventana,configuracion):
 
 
 	else:
-
+		
 	# numero de centros = 10
 		
 		puntitos = []
@@ -3151,13 +3156,17 @@ def guardarv9(ventana):
 	eleccionVentilacion = varVentilacion.get()
 	
 	
-	
+	"""
 	aa = poll()
 	print "Aqui es donde se cae"
 	print "asdfoajdsfajspdioj " + str(list1.curselection())
 	v = ""+str(aa)
-	sel = list1.get(aa)
+	import pdb;pdb.set_trace()
+	"""
 	
+	aa = list1.curselection()[0]
+	sel = list1.get(aa)
+	print ""+sel
 
 	fin5 = open("listaarchivos.txt","r")
 	fin_list5 = fin5.read().splitlines()
@@ -3769,6 +3778,7 @@ ocultar(v2)
 ocultar(v3)
 scroll1=Scrollbar(v0)
 list1=Listbox(v0)
+list1.configure(exportselection=0) # JEJE
 mitexto=StringVar()
 textoSc=0
 
