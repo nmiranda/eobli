@@ -4208,7 +4208,7 @@ varVentilacion = StringVar()
 
 #configuracion de locacion para escribir los archivos 
 
-workingDir2 = "/home/EOBLi/Prueba/Resultados/"
+workingDir2 = "Resultados/"
 
 #Configuracion ventana v9: Decision de direccion de ventilacion 
 	
