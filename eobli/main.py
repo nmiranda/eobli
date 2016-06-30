@@ -352,9 +352,6 @@ def ocultar(ventana):ventana.withdraw()
 def ejecutar(f): v0.after(200,f)
 def abrir(ventana):
 	if ventana is v2:
-		if not list1.curselection():
-			tkMessageBox.showerror("Error de valores", "Escoja una bateria, jeje")
-			return
 		if not e11.get().strip():
 			tkMessageBox.showerror("Error de valores", "Escoja una potencia, jeje")
 			return
@@ -4455,8 +4452,14 @@ def list_has_changed(selection):
 	
 
 cargarlistbox(ListaNombres,list1)
+list1.select_set(0)
+list1.event_generate("<<ListboxSelect>>")
 cargarlistbox(ListaNombres2,list3)
+list3.select_set(0)
+list3.event_generate("<<ListboxSelect>>")
 cargarlistbox(ListaNombres3,list4)
+list4.select_set(0)
+list4.event_generate("<<ListboxSelect>>")
 imprimir_en_label()
 
 #todas las ventanas parten escondidas y solo se abren cuando son llamadas
