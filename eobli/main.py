@@ -4008,16 +4008,16 @@ e818.grid(row=9,column=7)
 # JEJE VERSION DEVELOPMENT DEFAULTS
 
 v55 = StringVar()
-v55.set("600000")
+v55.set("55000")
 v661 = StringVar()
-v661.set("200")
+v661.set("80")
 v662 = StringVar()
-v662.set("200")
+v662.set("30")
 v663 = StringVar()
-v663.set("200")
+v663.set("80")
 v664 = StringVar()
 v77 = StringVar()
-v77.set("350000000")
+v77.set("8000")
 
 Label(v5,text="").grid(row=0, column=0)
 Label(v5,text=" ").grid(row=0,column=4)
@@ -4267,9 +4267,9 @@ v12 = StringVar()
 v13 = StringVar()
 
 # VALORES DEFAULT CODIGO NUEVO DEVELOPER JEJE
-v11.set("20")
-v12.set("20")
-v13.set("20")
+v11.set("7500")
+v12.set("7000")
+v13.set("651")
 
 
 
