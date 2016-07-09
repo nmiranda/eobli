@@ -618,27 +618,27 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
                 h = random.randint(0, len(repo) - 1)
             else:
                 h = 0
-                for i in range(len(pop)):
-                    for j in range(num_var):
-                        if len(repo) > 0:
-                            popvel[i][j] = w * popvel[i][j] + r1 * \
-                                (personalbest[i][j] - pop[i][j]) + \
-                                r2 * (repo[h][j] - pop[i][j])
-                            pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
+            for i in range(len(pop)):
+                for j in range(num_var):
+                    if len(repo) > 0:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j]) + \
+                            r2 * (repo[h][j] - pop[i][j])
+                        pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
 
-                            if pop[i][j] > limiteUp[j]:
-                                pop[i][j] = limiteUp[j]
-                            elif pop[i][j] < limiteDown[j]:
-                                pop[i][j] = limiteDown[j]
-                        else:
-                            popvel[i][j] = w * popvel[i][j] + r1 * \
-                                (personalbest[i][j] - pop[i][j])
-                            pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
+                        if pop[i][j] > limiteUp[j]:
+                            pop[i][j] = limiteUp[j]
+                        elif pop[i][j] < limiteDown[j]:
+                            pop[i][j] = limiteDown[j]
+                    else:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j])
+                        pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
 
-                            if pop[i][j] > limiteUp[j]:
-                                pop[i][j] = limiteUp[j]
-                            elif pop[i][j] < limiteDown[j]:
-                                pop[i][j] = limiteDown[j]
+                        if pop[i][j] > limiteUp[j]:
+                            pop[i][j] = limiteUp[j]
+                        elif pop[i][j] < limiteDown[j]:
+                            pop[i][j] = limiteDown[j]
 
         # evaluate solution: Obtener valores de funciones objetivo
 
@@ -768,6 +768,7 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
 
 
 poblacion = 10
+iteraciones = "100"
 pop = []
 popvel = []
 objectives = []
@@ -775,7 +776,6 @@ num_var = 2
 num_obj = 2
 limiteUp = []
 limiteDown = []
-iteraciones = 100
 s = []
 g = []
 
@@ -793,12 +793,12 @@ for j in range(int(poblacion)):
     s = []
     g = []
 
-    for j in range(len(pop)):
-        h = []
-        for i in range(num_obj):
-            h.append(None)
+for j in range(len(pop)):
+    h = []
+    for i in range(num_obj):
+        h.append(None)
 
-        objectives.append(h)
+    objectives.append(h)
 
 
 for j in range(num_var):
