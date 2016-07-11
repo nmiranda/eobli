@@ -604,7 +604,8 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     # inicio del ciclo por iteraciones
 
     for j in range(int(iteraciones)):
-
+        print "iteracion %d" % j
+        print "repo: %d" % len(repo)
         # update velocity: Con la poblacion creada, el primer paso es
         # recalcular la velocidad de las partciculas
 
@@ -624,21 +625,16 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
                         popvel[i][j] = w * popvel[i][j] + r1 * \
                             (personalbest[i][j] - pop[i][j]) + \
                             r2 * (repo[h][j] - pop[i][j])
-                        pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
-
-                        if pop[i][j] > limiteUp[j]:
-                            pop[i][j] = limiteUp[j]
-                        elif pop[i][j] < limiteDown[j]:
-                            pop[i][j] = limiteDown[j]
                     else:
                         popvel[i][j] = w * popvel[i][j] + r1 * \
                             (personalbest[i][j] - pop[i][j])
-                        pop[i][j] = round(pop[i][j] + popvel[i][j], 4)
 
-                        if pop[i][j] > limiteUp[j]:
-                            pop[i][j] = limiteUp[j]
-                        elif pop[i][j] < limiteDown[j]:
-                            pop[i][j] = limiteDown[j]
+                    pop[i][j] = pop[i][j] + popvel[i][j]
+
+                    if pop[i][j] > limiteUp[j]:
+                        pop[i][j] = limiteUp[j]
+                    elif pop[i][j] < limiteDown[j]:
+                        pop[i][j] = limiteDown[j]
 
         # evaluate solution: Obtener valores de funciones objetivo
 
@@ -727,6 +723,11 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
                     del repo[i]
                     del repoObj[i]
 
+        if len(repo) > max_repo_size:
+            surviving_indices = [random.randint(0, len(repo) - 1) for _ in range(max_repo_size)]
+            repo = [repo[i] for i in surviving_indices]
+            repoObj = [repoObj[i] for i in surviving_indices]
+
         # update best: Actualizar la mejor solucion en el historial
 
         respaldo = personalbest
@@ -767,49 +768,23 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     return repo, repoObj
 
 
-poblacion = 10
-iteraciones = "100"
+poblacion = 100
+iteraciones = "200"
+max_repo_size = poblacion
 pop = []
 popvel = []
 objectives = []
 num_var = 2
 num_obj = 2
-limiteUp = []
-limiteDown = []
-s = []
-g = []
-
-for j in range(int(poblacion)):
-    for i in range(num_var):
-        if i == 0:
-            s.append(round(random.random() * 0.307 + 1.05, 4))
-            g.append(round(random.random() * 0.75, 4))
-        else:
-            s.append(round(random.random() * 0.425 + 1.05, 4))
-            g.append(round(random.random() * 0.75, 4))
-
-    pop.append(s)
-    popvel.append(g)
-    s = []
-    g = []
-
-for j in range(len(pop)):
-    h = []
-    for i in range(num_obj):
-        h.append(None)
-
-    objectives.append(h)
+limiteUp = [1.312, 40]
+limiteDown = [1.001, 1.05]
 
 
-for j in range(num_var):
-    if j == 0:
-        limiteUp.append(1.312)
-        limiteDown.append(1.05)
-    else:
-        limiteUp.append(1.43)
-        limiteDown.append(1.05)
+for j in range(poblacion):
+    pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
+    popvel.append([0, 0])
 
-
+objectives = [[None for i in range(num_obj)] for j in range(len(pop))]
 
 [repoFin,repoObjFin] = modelojorgereyes(pop, popvel, num_var, objectives,
                  iteraciones, limiteUp, limiteDown)
