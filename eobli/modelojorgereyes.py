@@ -599,7 +599,7 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     personalbestObj = objectives
     numobj = 2
 
-    I = 10
+    I = 3
 
     # inicio del ciclo por iteraciones
 
@@ -768,37 +768,38 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     return repo, repoObj
 
 
-poblacion = 100
-iteraciones = "200"
-max_repo_size = poblacion
-pop = []
-popvel = []
-objectives = []
-num_var = 2
-num_obj = 2
-limiteUp = [1.312, 40]
-limiteDown = [1.001, 1.05]
+if __name__ == "__main__":
+    poblacion = 40
+    iteraciones = "200"
+    max_repo_size = 200
+    pop = []
+    popvel = []
+    objectives = []
+    num_var = 2
+    num_obj = 2
+    limiteUp = [1.312, 40]
+    limiteDown = [1.001, 1.05]
 
 
-for j in range(poblacion):
-    pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
-    popvel.append([0, 0])
+    for j in range(poblacion):
+        pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
+        popvel.append([0, 0])
 
-objectives = [[None for i in range(num_obj)] for j in range(len(pop))]
+    objectives = [[None for i in range(num_obj)] for j in range(len(pop))]
 
-[repoFin,repoObjFin] = modelojorgereyes(pop, popvel, num_var, objectives,
-                 iteraciones, limiteUp, limiteDown)
+    [repoFin,repoObjFin] = modelojorgereyes(pop, popvel, num_var, objectives,
+                     iteraciones, limiteUp, limiteDown)
 
 
-repoOX = []
-repoOY = []
+    repoOX = []
+    repoOY = []
 
-for i in range(len(repoObjFin)):
-    repoOX.append(repoObjFin[i][0])
-    repoOY.append(repoObjFin[i][1])
+    for i in range(len(repoObjFin)):
+        repoOX.append(repoObjFin[i][0])
+        repoOY.append(repoObjFin[i][1])
 
-pl.plot(repoOX, repoOY, 'bo')
-pl.xlabel('Temperatura (C)')
-pl.ylabel('Potencia Mecanica')
-pl.title('Frente de Pareto')
-pl.show()
+    pl.plot(repoOX, repoOY, 'bo')
+    pl.xlabel('Temperatura (C)')
+    pl.ylabel('Potencia Mecanica')
+    pl.title('Frente de Pareto')
+    pl.show()

@@ -69,6 +69,7 @@ v21.geometry("450x100")
 
 current = None
 kmeansindex = 0
+random.seed(42)
 
 # Seccion 3: Metodos
 
