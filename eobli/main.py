@@ -2523,6 +2523,7 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 
 	Diam = float(fin_list4[7])/1000
 	Largo = float(fin_list4[6])/1000
+	I = float(fin_list4[1])
 
 	vol = (np.power(Diam,2)*np.pi/4)*Largo     #Volumen celda [m3]
 	e = 0.015                      #Espaciado entre pared y celda [m]
@@ -2797,204 +2798,197 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 
 # Esta funcion es el algoritmo evolutivo combinado y adaptado para el modelo de Jorge Reyes
 
-def modelojorgereyes(pop,popvel,num_var,objectives,iteraciones,limiteUp,limiteDown):
+def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, limiteDown):
 
-	counter = 0
+    counter = 0
 
-	# leer los resultados de la modularizacion para cargarlos en el modelo
+    # leer los resultados de la modularizacion para cargarlos en el modelo
 
-	f = open('resultadosmodularizacion.txt', 'r')
-	mod_list = f.read().splitlines()
-	f.close()
+    # JEJE comentado para parametrizar bien
+    f = open('resultadosmodularizacion.txt', 'r')
+    mod_list = f.read().splitlines()
+    f.close()
 
-	n_fluido = int(mod_list[0])+1
-	col_celda = int(mod_list[1])
-	col_fluido = int(mod_list[1])+1
+    n_fluido = int(mod_list[0]) + 1
+    col_celda = int(mod_list[1])
+    col_fluido = int(mod_list[1]) + 1
 
-	repo = []
-	repoObj = []
-	personalbest = pop
-        personalbestObj = objectives 	
-	numobj = 2
-	
-	I = 10
-	
+    max_repo_size = 200
 
-	# inicio del ciclo por iteraciones 
+    repo = []
+    repoObj = []
+    personalbest = pop
+    personalbestObj = objectives
+    numobj = 2
 
-	for j in range(int(iteraciones)):
+    I = 3
 
-		#update velocity: Con la poblacion creada, el primer paso es recalcular la velocidad de las partciculas
+    # inicio del ciclo por iteraciones
 
-		if j>0:
+    for j in range(int(iteraciones)):
+        print "iteracion %d" % j
+        print "repo: %d" % len(repo)
+        # update velocity: Con la poblacion creada, el primer paso es
+        # recalcular la velocidad de las partciculas
 
-			w = 0.6
-			r1 = random.random()
-			r2 = random.random()
-        
-			if len(repo)>1:
-				h = random.randint(0,len(repo)-1)
-			else:
-                     		h = 0
-                        
-                
-                	for i in range(len(pop)):
-                        	for j in range(num_var):
-                                	if len(repo) > 0:
-                                        	popvel[i][j] = w*popvel[i][j]+r1*(personalbest[i][j]-pop[i][j])+r2*(repo[h][j]-pop[i][j])
-                                        	pop[i][j] = round(pop[i][j]+popvel[i][j],4)
+        if j > 0:
 
-                                        	if pop[i][j] > limiteUp[j]:
-                                                	pop[i][j] = limiteUp[j]
-                                        	elif pop[i][j] < limiteDown[j]:
-                                                	pop[i][j] = limiteDown[j]
-                                        
-                                        
-                                	else:
-                                        	popvel[i][j] = w*popvel[i][j]+r1*(personalbest[i][j]-pop[i][j])
-                                        	pop[i][j] = round(pop[i][j] + popvel[i][j],4)
+            w = 0.6
+            r1 = random.random()
+            r2 = random.random()
 
-                                        	if pop[i][j] > limiteUp[j]:
-                                                	pop[i][j] = limiteUp[j]
-                                        	elif pop[i][j] < limiteDown[j]:
-                                                	pop[i][j] = limiteDown[j]
+            if len(repo) > 1:
+                h = random.randint(0, len(repo) - 1)
+            else:
+                h = 0
+            for i in range(len(pop)):
+                for j in range(num_var):
+                    if len(repo) > 0:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j]) + \
+                            r2 * (repo[h][j] - pop[i][j])
+                    else:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j])
 
-		#evaluate solution: Obtener valores de funciones objetivo
+                    pop[i][j] = pop[i][j] + popvel[i][j]
 
-		for i in range(len(pop)):
-			S = pop[i][0]
-			Flow = pop[i][1]
-			
-			[T,PMec] = modelo(I,S,Flow,n_fluido,col_celda,col_fluido)
+                    if pop[i][j] > limiteUp[j]:
+                        pop[i][j] = limiteUp[j]
+                    elif pop[i][j] < limiteDown[j]:
+                        pop[i][j] = limiteDown[j]
 
-			Objetivo1 = T
-			Objetivo2 = PMec
+        # evaluate solution: Obtener valores de funciones objetivo
 
-			objectives[i][0] = Objetivo1
-			objectives[i][1] = Objetivo2
+        for i in range(len(pop)):
+            S = pop[i][0]
+            Flow = pop[i][1]
 
-			f = open(workingDir2 + 'modelJor' + str(counter)+'.txt', 'w')
-			f.write(""+"id:"+str(counter)+ ", " + str(pop[i][0]) + ", "+"" + str(pop[i][1]) + "," + str(objectives[i][0]) + ", " + str(objectives[i][1]) + "\n")
-			f.close() 
-	 	 	counter = counter + 1
-			
-		#non dominated search: Busqueda de soluciones no dominadas en la poblacion y comparacion con anteriores que estan en el repositorio
+            [T, PMec] = modelo(I, S, Flow, n_fluido, col_celda, col_fluido)
 
-		cuenta = []
-                cuentaRepo = []
-                
-                
-                for i in range(len(pop)):
-                        cuenta.append(0.0)
-        
-                for i in range(len(pop)):
-                        for j in range(len(pop)):
-                                
-                                out = False
-                                for k in range(numobj):
-                                        if i==j:
-                                                aa = 0
-                                        else:
+            Objetivo1 = T
+            Objetivo2 = PMec
 
-                                                if objectives[i][k] < objectives[j][k]:
-                                                        out = False
-                                                        break
-                                                elif objectives[i][k] > objectives[j][k]:
-                                                        out = True
-                        
-                                if out==True:
-                                        cuenta[i]=cuenta[i]+1
+            objectives[i][0] = Objetivo1
+            objectives[i][1] = Objetivo2
 
-        
-                for i in range(len(pop)):        
-                        if cuenta[i] == 0:
-                                c = []
-                                d = []
-                           
-                                for k in range(num_var):
-                                        c.append(pop[i][k])
+            f = open(workingDir2 + 'modelJor' + str(counter) + '.txt', 'w')
+            f.write("" + "id:" + str(counter) + ", " + str(pop[i][0]) + ", " + "" + str(
+                pop[i][1]) + "," + str(objectives[i][0]) + ", " + str(objectives[i][1]) + "\n")
+            f.close()
+            counter = counter + 1
 
-                                for j in range(numobj):
-                                        d.append(objectives[i][j])
+        # non dominated search: Busqueda de soluciones no dominadas en la
+        # poblacion y comparacion con anteriores que estan en el repositorio
 
-                            
-                                
-                                repo.append(c)
-                                repoObj.append(d)
-                               
+        cuenta = []
+        cuentaRepo = []
 
-                
-                
-                for i in range(len(repo)):
-                        cuentaRepo.append(0.0)
+        for i in range(len(pop)):
+            cuenta.append(0.0)
 
-                if len(repo)>1:
-                        for i in range(len(repo)):
-                                for j in range(len(repo)):
-                                
-                                        outRepo = False
-                                        for k in range(numobj):
-                                                if i==j:
-                                                        aa = 0
-                                                else:
-                                                        if repoObj[i][k] < repoObj[j][k]:
-                                                                out = False
-                                                                break
-                                                        elif repoObj[i][k] >= repoObj[j][k]:
-                                                                out = True
-                                
-                                        if out==True:
-                                                cuentaRepo[i]=cuentaRepo[i]+1
-                        
-                        
-                     
-                        for i in range(len(repo)-1,-1,-1):
-                                if cuentaRepo[i] > 0:
-                                        del repo[i]
-                                        del repoObj[i]
-                                        
+        for i in range(len(pop)):
+            for j in range(len(pop)):
 
-                
-		#update best: Actualizar la mejor solucion en el historial
+                out = False
+                for k in range(numobj):
+                    if i == j:
+                        aa = 0
+                    else:
 
-		respaldo = personalbest
-                respaldoobj = personalbestObj
-                personalbest = []
-                personalbestObj = []
-                
-                for i in range(len(pop)):
-                        out = False
-                        for k in range(numobj):
-                                if respaldoobj[i][k]<objectives[i][k]:
-                                        out = False
-                                        break
-                                elif respaldoobj[i][k]>objectives[i][k]:
-                                        out = True
-                        
-                        if out == True:
-                                e = []
-                                f = []
-                                for j in range(num_var):
-                                        e.append(pop[i][j])
-                                for l in range(numobj):
-                                        f.append(objectives[i][l])
+                        if objectives[i][k] < objectives[j][k]:
+                            out = False
+                            break
+                        elif objectives[i][k] > objectives[j][k]:
+                            out = True
 
-                                personalbestObj.append(f)
-                                personalbest.append(e)
+                if out == True:
+                    cuenta[i] = cuenta[i] + 1
+
+        for i in range(len(pop)):
+            if cuenta[i] == 0:
+                c = []
+                d = []
+
+                for k in range(num_var):
+                    c.append(pop[i][k])
+
+                for j in range(numobj):
+                    d.append(objectives[i][j])
+
+                repo.append(c)
+                repoObj.append(d)
+
+        for i in range(len(repo)):
+            cuentaRepo.append(0.0)
+
+        if len(repo) > 1:
+            for i in range(len(repo)):
+                for j in range(len(repo)):
+
+                    outRepo = False
+                    for k in range(numobj):
+                        if i == j:
+                            aa = 0
                         else:
-                                g = []
-                                h = []
-                                for j in range(num_var):
-                                        g.append(respaldo[i][j])
-                                for l in range(numobj):
-                                        h.append(respaldoobj[i][l])
-                                        
-                                personalbest.append(g)
-                                personalbestObj.append(h)
+                            if repoObj[i][k] < repoObj[j][k]:
+                                out = False
+                                break
+                            elif repoObj[i][k] >= repoObj[j][k]:
+                                out = True
 
-			
-	return repo,repoObj
-	# print "objetivos" +str(objectives)
+                    if out == True:
+                        cuentaRepo[i] = cuentaRepo[i] + 1
+
+            for i in range(len(repo) - 1, -1, -1):
+                if cuentaRepo[i] > 0:
+                    del repo[i]
+                    del repoObj[i]
+
+        if len(repo) > max_repo_size:
+            surviving_indices = [random.randint(0, len(repo) - 1) for _ in range(max_repo_size)]
+            repo = [repo[i] for i in surviving_indices]
+            repoObj = [repoObj[i] for i in surviving_indices]
+
+        # update best: Actualizar la mejor solucion en el historial
+
+        respaldo = personalbest
+        respaldoobj = personalbestObj
+        personalbest = []
+        personalbestObj = []
+
+        for i in range(len(pop)):
+            out = False
+            for k in range(numobj):
+                if respaldoobj[i][k] < objectives[i][k]:
+                    out = False
+                    break
+                elif respaldoobj[i][k] > objectives[i][k]:
+                    out = True
+
+            if out == True:
+                e = []
+                f = []
+                for j in range(num_var):
+                    e.append(pop[i][j])
+                for l in range(numobj):
+                    f.append(objectives[i][l])
+
+                personalbestObj.append(f)
+                personalbest.append(e)
+            else:
+                g = []
+                h = []
+                for j in range(num_var):
+                    g.append(respaldo[i][j])
+                for l in range(numobj):
+                    h.append(respaldoobj[i][l])
+
+                personalbest.append(g)
+                personalbestObj.append(h)
+
+    print "objetivos" +str(objectives)
+    return repo, repoObj
 	
 
 	
@@ -3009,31 +3003,58 @@ def correrModelo(ventana,configuracion):
 	objectives = []
 	num_var = 2
 	num_obj= 2
-	limiteUp = []
-        limiteDown = []	
 	vv13v1 = v13v1.get()
 	vv13v2 = v13v2.get()
 	s = []
 	g = []
+
+
+
+	aa = poll3()
+	sel2 = list3.get(aa)
+	print sel2
+
+	# abre la lista de ventiladores y compara la seleccion con la lista para abrir el archivo de ventilador correcto
+
+	fin6 = open("listaVentiladores.txt")
+	fin_list6 = fin6.read().splitlines()
+	fin6.close()
+
+	file11 = fin_list6[0]
+
+	#busca la celda elegida por el usuario en la libreria	
+
+	for i in range(0,len(fin_list6)):
+		if sel2 == fin_list6[i]:
+			file11 = fin_list6[i] #revisar
+			break
+
+	file11 = list3.get(list3.curselection()[0])
+
+	fin44 = open(file11 + ".txt", "r")
+	fin_list44 = fin44.read().splitlines()
+	fin44.close()
+
+	tamVentana = float(fin_list44[0]) #tamano ventana
+	maxFlujo = float(fin_list44[1]) #max Flujo
+
+	# Ajusta los limites de la poblacion para futuras iteraciones
+
+	print maxFlujo * 2118.880003
+	raw_input("Press Enter to continue...")
+
+	limiteUp = [1.312,  maxFlujo * 2118.880003]
+	limiteDown = [1.001, 1.05]
 
 	poblacion = vv13v1
 	iteraciones = vv13v2
 	
 	# creacion de la poblacion inicial
 	
-	for j in range(int(poblacion)):
-		for i in range(num_var):
-			if i==0:
-                        	s.append(round(random.random()*0.307+1.05,4))
-                        	g.append(round(random.random()*0.75,4))
-			else:
-				s.append(round(random.random()*0.425+1.05,4))
-				g.append(round(random.random()*0.75,4))
 
-		pop.append(s)
-		popvel.append(g)
-		s = []
-		g = []
+	for j in range(int(poblacion)):
+		pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
+		popvel.append([0, 0])
 
 	for j in range(len(pop)):
 		h = []
@@ -3042,15 +3063,6 @@ def correrModelo(ventana,configuracion):
 		
 		objectives.append(h)
 
-	# Ajusta los limites de la poblacion para futuras iteraciones
-
-	for j in range(num_var):
-		if j==0:
-			limiteUp.append(1.312)
-                        limiteDown.append(1.05)
-		else:
-			limiteUp.append(1.43)
-			limiteDown.append(1.05)	
 
 	#Eleccion de grilla o escalonado 	
 	if configuracion == "grilla":
