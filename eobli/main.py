@@ -71,6 +71,10 @@ current = None
 kmeansindex = 0
 random.seed(42)
 
+
+USER_SELECTED_MODULARIZATION = None
+USER_HAS_CONSTRUCTED = None
+
 # Seccion 3: Metodos
 
 #funcion RepresentsFloat para correcto funcionamiento de los bloques string/int (bloquea mal uso del software)
@@ -304,10 +308,8 @@ def mostrar(ventana,v11,v12,v13):
 	
 		ventana.deiconify()
 
-
-
-
-
+	global USER_HAS_CONSTRUCTED
+	USER_HAS_CONSTRUCTED = True
 
 
 #Funcion abrir2 sirve para desplegar la ventana de fallo en las restricciones
@@ -349,9 +351,18 @@ def reiniciar(ventana):
 
 #Funciones de control: Ocultar para tapar la ventana, Ejecutar para correr un programa con desfase para cargar la ventana, Abrir para desplegar la ventana
 
-def ocultar(ventana):ventana.withdraw()
+def ocultar(ventana):
+
+	if ventana is v2:
+		if USER_SELECTED_MODULARIZATION == False:
+			tkMessageBox.showerror("Error de modularización", "Por favor, seleccione y guarde una configuración de modularización.")
+			return
+	ventana.withdraw()
+
 def ejecutar(f): v0.after(200,f)
+
 def abrir(ventana):
+
 	if ventana is v2:
 		if not e11.get().strip():
 			tkMessageBox.showerror("Error de valores", "Escoja una potencia, jeje")
@@ -362,6 +373,18 @@ def abrir(ventana):
 		if not e13.get().strip():
 			tkMessageBox.showerror("Error de valores", "Escoja un voltaje, jeje")
 			return
+		if USER_HAS_CONSTRUCTED == False:
+			tkMessageBox.showerror("Error de construcción", "Por favor, seleccione \"Construir\" para construir el banco de baterías.")
+			return
+
+	if ventana is v4:
+		if USER_HAS_CONSTRUCTED == False:
+			tkMessageBox.showerror("Error de construcción", "Por favor, seleccione \"Construir\" para construir el banco de baterías.")
+			return
+		if USER_SELECTED_MODULARIZATION == False:
+			tkMessageBox.showerror("Error de modularización", "Por favor, seleccione \"Pasar a Etapa 2\" y guarde una configuración de modularización.")
+			return
+
 	ventana.deiconify()
 
 
@@ -1738,13 +1761,10 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 			if fluido=='aire':    
 				
 				# Aqui se cae
-				# Si j = 0
-				# entonces T[j,1] == T[0,1]
-				# pero T = np.zeros((filas,columnas)) (ver definición arriba en la misma función)
-				# Si filas = 3 y columnas = 1, entonces T.shape == (3,1)
-				# Por lo tanto, al acceder a T[j,1] == T[0,1] se sale del rango de T. WTF!
+				# T[j,1] está accediendo a la segunda columna de la matriz
+				# Pero si columnas == 1 entonces T tiene solo una columna.          WTF!
 
-				raw_input("Press enter to crash the application...")
+				#raw_input("Press enter to crash the application...")
 
 				Tout=(T[j,columnas-1]+273.15)-((T[j,columnas-1]+273.15)-(T[j,0]+273.15+Tfluido_in)/2)*np.exp((-1*3.14*diametro*columnas*filas*h)/(Ro((T[j,1]+273.15+Tfluido_in)/2)*Velocidadfluido*filas*St*diametro*Cp))
 			
@@ -1984,6 +2004,8 @@ def modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limi
 	f.close()
 
 	filas = mod_list[0]
+
+	# OJO: si columnas == 1 la aplicación se cae en bancotubosT_G
 	columnas = mod_list[1]
 
 	#aca esta la seccion para usar diferentes tamanos de celda
@@ -2045,7 +2067,7 @@ def modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limi
 	repo = []
 	repoObj = []
 	personalbest = pop
-        personalbestObj = objectives 	
+	personalbestObj = objectives
 	numobj = 2
 	
 
@@ -3517,10 +3539,13 @@ def guardarv9(ventana):
 
 	f = open('resultadosmodularizacion.txt', 'w')
 	f.write(str(arregloEsc[0])+'\n')
-	f.write(str(arregloEsc[1])+'\n')
+	f.write(str(arregloEsc[1])+'\n') # OJO: si arregloEsc[1] == 1 la aplicación se cae en bancotubosT_G
 	f.write(str(arregloEsc[2])+'\n')
 	f.write(str(numeroVent)+'\n')
 	f.close()
+
+	global USER_SELECTED_MODULARIZATION
+	USER_SELECTED_MODULARIZATION = True
 		
 							
 
@@ -4515,4 +4540,9 @@ v18.withdraw()
 v19.withdraw()
 v20.withdraw()
 v21.withdraw()
+
+
+USER_SELECTED_MODULARIZATION = False
+USER_HAS_CONSTRUCTED = False
+
 v0.mainloop()
