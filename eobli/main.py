@@ -4456,8 +4456,9 @@ def cargarlistbox(lista,listbox):
 # Imprimir en label se usa para grabar el resultado de una seleccion en la pantalla
 
 def imprimir_en_label():
+
     label1.after(100, imprimir_en_label) # Llamada recursiva con .after
-    ind3 = list3.curselection()
+    ind3 = list3.curselection() # Acá se cae. Qué es list3???
     ind4 = list4.curselection()
     ind = list1.curselection()
 
@@ -4472,6 +4473,7 @@ def imprimir_en_label():
     if list4.curselection() != ():
     	sel4 = list4.get(ind4)
         mitexto4.set(sel4)
+
 
 
 # Poll se utiliza para revisar las listas y ver si el resultado ha cambiado
@@ -4520,26 +4522,48 @@ list4.event_generate("<<ListboxSelect>>")
 imprimir_en_label()
 
 #todas las ventanas parten escondidas y solo se abren cuando son llamadas
+def nope():
+	pass
 
 v1.withdraw()
+v1.protocol("WM_DELETE_WINDOW", nope)
+v2.protocol("WM_DELETE_WINDOW", nope)
 v4.withdraw()
+v4.protocol("WM_DELETE_WINDOW", nope)
 v5.withdraw()
+v5.protocol("WM_DELETE_WINDOW", nope)
 v6.withdraw()
+v6.protocol("WM_DELETE_WINDOW", nope)
 v7.withdraw()
+v7.protocol("WM_DELETE_WINDOW", nope)
 v8.withdraw()
+v8.protocol("WM_DELETE_WINDOW", nope)
 v9.withdraw()
+v9.protocol("WM_DELETE_WINDOW", nope)
 v10.withdraw()
+v10.protocol("WM_DELETE_WINDOW", nope)
 v11v.withdraw()
+v11v.protocol("WM_DELETE_WINDOW", nope)
 v12v.withdraw()
+v12v.protocol("WM_DELETE_WINDOW", nope)
 v13v.withdraw()
+v13v.protocol("WM_DELETE_WINDOW", nope)
 v14.withdraw()
+v14.protocol("WM_DELETE_WINDOW", nope)
 v15.withdraw()
+v15.protocol("WM_DELETE_WINDOW", nope)
 v16.withdraw()
+v16.protocol("WM_DELETE_WINDOW", nope)
 v17.withdraw()
+v17.protocol("WM_DELETE_WINDOW", nope)
 v18.withdraw()
+v18.protocol("WM_DELETE_WINDOW", nope)
 v19.withdraw()
+v19.protocol("WM_DELETE_WINDOW", nope)
 v20.withdraw()
+v20.protocol("WM_DELETE_WINDOW", nope)
 v21.withdraw()
+v21.protocol("WM_DELETE_WINDOW", nope)
 
 
 USER_SELECTED_MODULARIZATION = False
