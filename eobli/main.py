@@ -1576,6 +1576,14 @@ def m(St, SL):
 
 def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_interna,Tfluido_in,Caudal,T0celdas,St,SL,Ah,Voltaje,dt):
 
+
+	"""
+	fluido = 'aire'
+
+	"""
+
+
+
 	# Inicio de conteo de tiempo y transformacion de filas y columnas
 	tic = time.time()
 	columnas = int(columnas)
@@ -1663,6 +1671,7 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 	RoAl = 2719
 	CpAl = 871
 
+	# 
 	T = np.zeros((filas,columnas)) #Temperatura celdas tiempo t [C]
 
 
@@ -1727,6 +1736,16 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 
 			# Temperatura de Salida del Fluido
 			if fluido=='aire':    
+				
+				# Aqui se cae
+				# Si j = 0
+				# entonces T[j,1] == T[0,1]
+				# pero T = np.zeros((filas,columnas)) (ver definición arriba en la misma función)
+				# Si filas = 3 y columnas = 1, entonces T.shape == (3,1)
+				# Por lo tanto, al acceder a T[j,1] == T[0,1] se sale del rango de T. WTF!
+
+				raw_input("Press enter to crash the application...")
+
 				Tout=(T[j,columnas-1]+273.15)-((T[j,columnas-1]+273.15)-(T[j,0]+273.15+Tfluido_in)/2)*np.exp((-1*3.14*diametro*columnas*filas*h)/(Ro((T[j,1]+273.15+Tfluido_in)/2)*Velocidadfluido*filas*St*diametro*Cp))
 			
 			if fluido=='agua':
@@ -3041,7 +3060,7 @@ def correrModelo(ventana,configuracion):
 	# Ajusta los limites de la poblacion para futuras iteraciones
 
 	print maxFlujo * 2118.880003
-	raw_input("Press Enter to continue...")
+	#raw_input("Press Enter to continue...")
 
 	limiteUp = [1.312,  maxFlujo * 2118.880003]
 	limiteDown = [1.001, 1.05]
