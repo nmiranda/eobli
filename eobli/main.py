@@ -69,6 +69,11 @@ v21.geometry("450x100")
 
 current = None
 kmeansindex = 0
+random.seed(42)
+
+
+USER_SELECTED_MODULARIZATION = None
+USER_HAS_CONSTRUCTED = None
 
 # Seccion 3: Metodos
 
@@ -303,10 +308,8 @@ def mostrar(ventana,v11,v12,v13):
 	
 		ventana.deiconify()
 
-
-
-
-
+	global USER_HAS_CONSTRUCTED
+	USER_HAS_CONSTRUCTED = True
 
 
 #Funcion abrir2 sirve para desplegar la ventana de fallo en las restricciones
@@ -348,9 +351,18 @@ def reiniciar(ventana):
 
 #Funciones de control: Ocultar para tapar la ventana, Ejecutar para correr un programa con desfase para cargar la ventana, Abrir para desplegar la ventana
 
-def ocultar(ventana):ventana.withdraw()
+def ocultar(ventana):
+
+	if ventana is v2:
+		if USER_SELECTED_MODULARIZATION == False:
+			tkMessageBox.showerror("Error de modularización", "Por favor, seleccione y guarde una configuración de modularización.")
+			return
+	ventana.withdraw()
+
 def ejecutar(f): v0.after(200,f)
+
 def abrir(ventana):
+
 	if ventana is v2:
 		if not e11.get().strip():
 			tkMessageBox.showerror("Error de valores", "Escoja una potencia, jeje")
@@ -361,6 +373,18 @@ def abrir(ventana):
 		if not e13.get().strip():
 			tkMessageBox.showerror("Error de valores", "Escoja un voltaje, jeje")
 			return
+		if USER_HAS_CONSTRUCTED == False:
+			tkMessageBox.showerror("Error de construcción", "Por favor, seleccione \"Construir\" para construir el banco de baterías.")
+			return
+
+	if ventana is v4:
+		if USER_HAS_CONSTRUCTED == False:
+			tkMessageBox.showerror("Error de construcción", "Por favor, seleccione \"Construir\" para construir el banco de baterías.")
+			return
+		if USER_SELECTED_MODULARIZATION == False:
+			tkMessageBox.showerror("Error de modularización", "Por favor, seleccione \"Pasar a Etapa 2\" y guarde una configuración de modularización.")
+			return
+
 	ventana.deiconify()
 
 
@@ -1575,6 +1599,14 @@ def m(St, SL):
 
 def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_interna,Tfluido_in,Caudal,T0celdas,St,SL,Ah,Voltaje,dt):
 
+
+	"""
+	fluido = 'aire'
+
+	"""
+
+
+
 	# Inicio de conteo de tiempo y transformacion de filas y columnas
 	tic = time.time()
 	columnas = int(columnas)
@@ -1662,6 +1694,7 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 	RoAl = 2719
 	CpAl = 871
 
+	# 
 	T = np.zeros((filas,columnas)) #Temperatura celdas tiempo t [C]
 
 
@@ -1726,6 +1759,13 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 
 			# Temperatura de Salida del Fluido
 			if fluido=='aire':    
+				
+				# Aqui se cae
+				# T[j,1] está accediendo a la segunda columna de la matriz
+				# Pero si columnas == 1 entonces T tiene solo una columna.          WTF!
+
+				#raw_input("Press enter to crash the application...")
+
 				Tout=(T[j,columnas-1]+273.15)-((T[j,columnas-1]+273.15)-(T[j,0]+273.15+Tfluido_in)/2)*np.exp((-1*3.14*diametro*columnas*filas*h)/(Ro((T[j,1]+273.15+Tfluido_in)/2)*Velocidadfluido*filas*St*diametro*Cp))
 			
 			if fluido=='agua':
@@ -1964,6 +2004,8 @@ def modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limi
 	f.close()
 
 	filas = mod_list[0]
+
+	# OJO: si columnas == 1 la aplicación se cae en bancotubosT_G
 	columnas = mod_list[1]
 
 	#aca esta la seccion para usar diferentes tamanos de celda
@@ -2025,7 +2067,7 @@ def modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limi
 	repo = []
 	repoObj = []
 	personalbest = pop
-        personalbestObj = objectives 	
+	personalbestObj = objectives
 	numobj = 2
 	
 
@@ -2522,6 +2564,7 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 
 	Diam = float(fin_list4[7])/1000
 	Largo = float(fin_list4[6])/1000
+	I = float(fin_list4[1])
 
 	vol = (np.power(Diam,2)*np.pi/4)*Largo     #Volumen celda [m3]
 	e = 0.015                      #Espaciado entre pared y celda [m]
@@ -2796,204 +2839,197 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 
 # Esta funcion es el algoritmo evolutivo combinado y adaptado para el modelo de Jorge Reyes
 
-def modelojorgereyes(pop,popvel,num_var,objectives,iteraciones,limiteUp,limiteDown):
+def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, limiteDown):
 
-	counter = 0
+    counter = 0
 
-	# leer los resultados de la modularizacion para cargarlos en el modelo
+    # leer los resultados de la modularizacion para cargarlos en el modelo
 
-	f = open('resultadosmodularizacion.txt', 'r')
-	mod_list = f.read().splitlines()
-	f.close()
+    # JEJE comentado para parametrizar bien
+    f = open('resultadosmodularizacion.txt', 'r')
+    mod_list = f.read().splitlines()
+    f.close()
 
-	n_fluido = int(mod_list[0])+1
-	col_celda = int(mod_list[1])
-	col_fluido = int(mod_list[1])+1
+    n_fluido = int(mod_list[0]) + 1
+    col_celda = int(mod_list[1])
+    col_fluido = int(mod_list[1]) + 1
 
-	repo = []
-	repoObj = []
-	personalbest = pop
-        personalbestObj = objectives 	
-	numobj = 2
-	
-	I = 10
-	
+    max_repo_size = 200
 
-	# inicio del ciclo por iteraciones 
+    repo = []
+    repoObj = []
+    personalbest = pop
+    personalbestObj = objectives
+    numobj = 2
 
-	for j in range(int(iteraciones)):
+    I = 3
 
-		#update velocity: Con la poblacion creada, el primer paso es recalcular la velocidad de las partciculas
+    # inicio del ciclo por iteraciones
 
-		if j>0:
+    for j in range(int(iteraciones)):
+        print "iteracion %d" % j
+        print "repo: %d" % len(repo)
+        # update velocity: Con la poblacion creada, el primer paso es
+        # recalcular la velocidad de las partciculas
 
-			w = 0.6
-			r1 = random.random()
-			r2 = random.random()
-        
-			if len(repo)>1:
-				h = random.randint(0,len(repo)-1)
-			else:
-                     		h = 0
-                        
-                
-                	for i in range(len(pop)):
-                        	for j in range(num_var):
-                                	if len(repo) > 0:
-                                        	popvel[i][j] = w*popvel[i][j]+r1*(personalbest[i][j]-pop[i][j])+r2*(repo[h][j]-pop[i][j])
-                                        	pop[i][j] = round(pop[i][j]+popvel[i][j],4)
+        if j > 0:
 
-                                        	if pop[i][j] > limiteUp[j]:
-                                                	pop[i][j] = limiteUp[j]
-                                        	elif pop[i][j] < limiteDown[j]:
-                                                	pop[i][j] = limiteDown[j]
-                                        
-                                        
-                                	else:
-                                        	popvel[i][j] = w*popvel[i][j]+r1*(personalbest[i][j]-pop[i][j])
-                                        	pop[i][j] = round(pop[i][j] + popvel[i][j],4)
+            w = 0.6
+            r1 = random.random()
+            r2 = random.random()
 
-                                        	if pop[i][j] > limiteUp[j]:
-                                                	pop[i][j] = limiteUp[j]
-                                        	elif pop[i][j] < limiteDown[j]:
-                                                	pop[i][j] = limiteDown[j]
+            if len(repo) > 1:
+                h = random.randint(0, len(repo) - 1)
+            else:
+                h = 0
+            for i in range(len(pop)):
+                for j in range(num_var):
+                    if len(repo) > 0:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j]) + \
+                            r2 * (repo[h][j] - pop[i][j])
+                    else:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j])
 
-		#evaluate solution: Obtener valores de funciones objetivo
+                    pop[i][j] = pop[i][j] + popvel[i][j]
 
-		for i in range(len(pop)):
-			S = pop[i][0]
-			Flow = pop[i][1]
-			
-			[T,PMec] = modelo(I,S,Flow,n_fluido,col_celda,col_fluido)
+                    if pop[i][j] > limiteUp[j]:
+                        pop[i][j] = limiteUp[j]
+                    elif pop[i][j] < limiteDown[j]:
+                        pop[i][j] = limiteDown[j]
 
-			Objetivo1 = T
-			Objetivo2 = PMec
+        # evaluate solution: Obtener valores de funciones objetivo
 
-			objectives[i][0] = Objetivo1
-			objectives[i][1] = Objetivo2
+        for i in range(len(pop)):
+            S = pop[i][0]
+            Flow = pop[i][1]
 
-			f = open(workingDir2 + 'modelJor' + str(counter)+'.txt', 'w')
-			f.write(""+"id:"+str(counter)+ ", " + str(pop[i][0]) + ", "+"" + str(pop[i][1]) + "," + str(objectives[i][0]) + ", " + str(objectives[i][1]) + "\n")
-			f.close() 
-	 	 	counter = counter + 1
-			
-		#non dominated search: Busqueda de soluciones no dominadas en la poblacion y comparacion con anteriores que estan en el repositorio
+            [T, PMec] = modelo(I, S, Flow, n_fluido, col_celda, col_fluido)
 
-		cuenta = []
-                cuentaRepo = []
-                
-                
-                for i in range(len(pop)):
-                        cuenta.append(0.0)
-        
-                for i in range(len(pop)):
-                        for j in range(len(pop)):
-                                
-                                out = False
-                                for k in range(numobj):
-                                        if i==j:
-                                                aa = 0
-                                        else:
+            Objetivo1 = T
+            Objetivo2 = PMec
 
-                                                if objectives[i][k] < objectives[j][k]:
-                                                        out = False
-                                                        break
-                                                elif objectives[i][k] > objectives[j][k]:
-                                                        out = True
-                        
-                                if out==True:
-                                        cuenta[i]=cuenta[i]+1
+            objectives[i][0] = Objetivo1
+            objectives[i][1] = Objetivo2
 
-        
-                for i in range(len(pop)):        
-                        if cuenta[i] == 0:
-                                c = []
-                                d = []
-                           
-                                for k in range(num_var):
-                                        c.append(pop[i][k])
+            f = open(workingDir2 + 'modelJor' + str(counter) + '.txt', 'w')
+            f.write("" + "id:" + str(counter) + ", " + str(pop[i][0]) + ", " + "" + str(
+                pop[i][1]) + "," + str(objectives[i][0]) + ", " + str(objectives[i][1]) + "\n")
+            f.close()
+            counter = counter + 1
 
-                                for j in range(numobj):
-                                        d.append(objectives[i][j])
+        # non dominated search: Busqueda de soluciones no dominadas en la
+        # poblacion y comparacion con anteriores que estan en el repositorio
 
-                            
-                                
-                                repo.append(c)
-                                repoObj.append(d)
-                               
+        cuenta = []
+        cuentaRepo = []
 
-                
-                
-                for i in range(len(repo)):
-                        cuentaRepo.append(0.0)
+        for i in range(len(pop)):
+            cuenta.append(0.0)
 
-                if len(repo)>1:
-                        for i in range(len(repo)):
-                                for j in range(len(repo)):
-                                
-                                        outRepo = False
-                                        for k in range(numobj):
-                                                if i==j:
-                                                        aa = 0
-                                                else:
-                                                        if repoObj[i][k] < repoObj[j][k]:
-                                                                out = False
-                                                                break
-                                                        elif repoObj[i][k] >= repoObj[j][k]:
-                                                                out = True
-                                
-                                        if out==True:
-                                                cuentaRepo[i]=cuentaRepo[i]+1
-                        
-                        
-                     
-                        for i in range(len(repo)-1,-1,-1):
-                                if cuentaRepo[i] > 0:
-                                        del repo[i]
-                                        del repoObj[i]
-                                        
+        for i in range(len(pop)):
+            for j in range(len(pop)):
 
-                
-		#update best: Actualizar la mejor solucion en el historial
+                out = False
+                for k in range(numobj):
+                    if i == j:
+                        aa = 0
+                    else:
 
-		respaldo = personalbest
-                respaldoobj = personalbestObj
-                personalbest = []
-                personalbestObj = []
-                
-                for i in range(len(pop)):
-                        out = False
-                        for k in range(numobj):
-                                if respaldoobj[i][k]<objectives[i][k]:
-                                        out = False
-                                        break
-                                elif respaldoobj[i][k]>objectives[i][k]:
-                                        out = True
-                        
-                        if out == True:
-                                e = []
-                                f = []
-                                for j in range(num_var):
-                                        e.append(pop[i][j])
-                                for l in range(numobj):
-                                        f.append(objectives[i][l])
+                        if objectives[i][k] < objectives[j][k]:
+                            out = False
+                            break
+                        elif objectives[i][k] > objectives[j][k]:
+                            out = True
 
-                                personalbestObj.append(f)
-                                personalbest.append(e)
+                if out == True:
+                    cuenta[i] = cuenta[i] + 1
+
+        for i in range(len(pop)):
+            if cuenta[i] == 0:
+                c = []
+                d = []
+
+                for k in range(num_var):
+                    c.append(pop[i][k])
+
+                for j in range(numobj):
+                    d.append(objectives[i][j])
+
+                repo.append(c)
+                repoObj.append(d)
+
+        for i in range(len(repo)):
+            cuentaRepo.append(0.0)
+
+        if len(repo) > 1:
+            for i in range(len(repo)):
+                for j in range(len(repo)):
+
+                    outRepo = False
+                    for k in range(numobj):
+                        if i == j:
+                            aa = 0
                         else:
-                                g = []
-                                h = []
-                                for j in range(num_var):
-                                        g.append(respaldo[i][j])
-                                for l in range(numobj):
-                                        h.append(respaldoobj[i][l])
-                                        
-                                personalbest.append(g)
-                                personalbestObj.append(h)
+                            if repoObj[i][k] < repoObj[j][k]:
+                                out = False
+                                break
+                            elif repoObj[i][k] >= repoObj[j][k]:
+                                out = True
 
-			
-	return repo,repoObj
-	# print "objetivos" +str(objectives)
+                    if out == True:
+                        cuentaRepo[i] = cuentaRepo[i] + 1
+
+            for i in range(len(repo) - 1, -1, -1):
+                if cuentaRepo[i] > 0:
+                    del repo[i]
+                    del repoObj[i]
+
+        if len(repo) > max_repo_size:
+            surviving_indices = [random.randint(0, len(repo) - 1) for _ in range(max_repo_size)]
+            repo = [repo[i] for i in surviving_indices]
+            repoObj = [repoObj[i] for i in surviving_indices]
+
+        # update best: Actualizar la mejor solucion en el historial
+
+        respaldo = personalbest
+        respaldoobj = personalbestObj
+        personalbest = []
+        personalbestObj = []
+
+        for i in range(len(pop)):
+            out = False
+            for k in range(numobj):
+                if respaldoobj[i][k] < objectives[i][k]:
+                    out = False
+                    break
+                elif respaldoobj[i][k] > objectives[i][k]:
+                    out = True
+
+            if out == True:
+                e = []
+                f = []
+                for j in range(num_var):
+                    e.append(pop[i][j])
+                for l in range(numobj):
+                    f.append(objectives[i][l])
+
+                personalbestObj.append(f)
+                personalbest.append(e)
+            else:
+                g = []
+                h = []
+                for j in range(num_var):
+                    g.append(respaldo[i][j])
+                for l in range(numobj):
+                    h.append(respaldoobj[i][l])
+
+                personalbest.append(g)
+                personalbestObj.append(h)
+
+    print "objetivos" +str(objectives)
+    return repo, repoObj
 	
 
 	
@@ -3008,31 +3044,58 @@ def correrModelo(ventana,configuracion):
 	objectives = []
 	num_var = 2
 	num_obj= 2
-	limiteUp = []
-        limiteDown = []	
 	vv13v1 = v13v1.get()
 	vv13v2 = v13v2.get()
 	s = []
 	g = []
+
+
+
+	aa = poll3()
+	sel2 = list3.get(aa)
+	print sel2
+
+	# abre la lista de ventiladores y compara la seleccion con la lista para abrir el archivo de ventilador correcto
+
+	fin6 = open("listaVentiladores.txt")
+	fin_list6 = fin6.read().splitlines()
+	fin6.close()
+
+	file11 = fin_list6[0]
+
+	#busca la celda elegida por el usuario en la libreria	
+
+	for i in range(0,len(fin_list6)):
+		if sel2 == fin_list6[i]:
+			file11 = fin_list6[i] #revisar
+			break
+
+	file11 = list3.get(list3.curselection()[0])
+
+	fin44 = open(file11 + ".txt", "r")
+	fin_list44 = fin44.read().splitlines()
+	fin44.close()
+
+	tamVentana = float(fin_list44[0]) #tamano ventana
+	maxFlujo = float(fin_list44[1]) #max Flujo
+
+	# Ajusta los limites de la poblacion para futuras iteraciones
+
+	print maxFlujo * 2118.880003
+	#raw_input("Press Enter to continue...")
+
+	limiteUp = [1.312,  maxFlujo * 2118.880003]
+	limiteDown = [1.001, 1.05]
 
 	poblacion = vv13v1
 	iteraciones = vv13v2
 	
 	# creacion de la poblacion inicial
 	
-	for j in range(int(poblacion)):
-		for i in range(num_var):
-			if i==0:
-                        	s.append(round(random.random()*0.307+1.05,4))
-                        	g.append(round(random.random()*0.75,4))
-			else:
-				s.append(round(random.random()*0.425+1.05,4))
-				g.append(round(random.random()*0.75,4))
 
-		pop.append(s)
-		popvel.append(g)
-		s = []
-		g = []
+	for j in range(int(poblacion)):
+		pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
+		popvel.append([0, 0])
 
 	for j in range(len(pop)):
 		h = []
@@ -3041,15 +3104,6 @@ def correrModelo(ventana,configuracion):
 		
 		objectives.append(h)
 
-	# Ajusta los limites de la poblacion para futuras iteraciones
-
-	for j in range(num_var):
-		if j==0:
-			limiteUp.append(1.312)
-                        limiteDown.append(1.05)
-		else:
-			limiteUp.append(1.43)
-			limiteDown.append(1.05)	
 
 	#Eleccion de grilla o escalonado 	
 	if configuracion == "grilla":
@@ -3485,10 +3539,13 @@ def guardarv9(ventana):
 
 	f = open('resultadosmodularizacion.txt', 'w')
 	f.write(str(arregloEsc[0])+'\n')
-	f.write(str(arregloEsc[1])+'\n')
+	f.write(str(arregloEsc[1])+'\n') # OJO: si arregloEsc[1] == 1 la aplicación se cae en bancotubosT_G
 	f.write(str(arregloEsc[2])+'\n')
 	f.write(str(numeroVent)+'\n')
 	f.close()
+
+	global USER_SELECTED_MODULARIZATION
+	USER_SELECTED_MODULARIZATION = True
 		
 							
 
@@ -4399,8 +4456,9 @@ def cargarlistbox(lista,listbox):
 # Imprimir en label se usa para grabar el resultado de una seleccion en la pantalla
 
 def imprimir_en_label():
+
     label1.after(100, imprimir_en_label) # Llamada recursiva con .after
-    ind3 = list3.curselection()
+    ind3 = list3.curselection() # Acá se cae. Qué es list3???
     ind4 = list4.curselection()
     ind = list1.curselection()
 
@@ -4415,6 +4473,7 @@ def imprimir_en_label():
     if list4.curselection() != ():
     	sel4 = list4.get(ind4)
         mitexto4.set(sel4)
+
 
 
 # Poll se utiliza para revisar las listas y ver si el resultado ha cambiado
@@ -4463,24 +4522,51 @@ list4.event_generate("<<ListboxSelect>>")
 imprimir_en_label()
 
 #todas las ventanas parten escondidas y solo se abren cuando son llamadas
+def nope():
+	pass
 
 v1.withdraw()
+v1.protocol("WM_DELETE_WINDOW", nope)
+v2.protocol("WM_DELETE_WINDOW", nope)
 v4.withdraw()
+v4.protocol("WM_DELETE_WINDOW", nope)
 v5.withdraw()
+v5.protocol("WM_DELETE_WINDOW", nope)
 v6.withdraw()
+v6.protocol("WM_DELETE_WINDOW", nope)
 v7.withdraw()
+v7.protocol("WM_DELETE_WINDOW", nope)
 v8.withdraw()
+v8.protocol("WM_DELETE_WINDOW", nope)
 v9.withdraw()
+v9.protocol("WM_DELETE_WINDOW", nope)
 v10.withdraw()
+v10.protocol("WM_DELETE_WINDOW", nope)
 v11v.withdraw()
+v11v.protocol("WM_DELETE_WINDOW", nope)
 v12v.withdraw()
+v12v.protocol("WM_DELETE_WINDOW", nope)
 v13v.withdraw()
+v13v.protocol("WM_DELETE_WINDOW", nope)
 v14.withdraw()
+v14.protocol("WM_DELETE_WINDOW", nope)
 v15.withdraw()
+v15.protocol("WM_DELETE_WINDOW", nope)
 v16.withdraw()
+v16.protocol("WM_DELETE_WINDOW", nope)
 v17.withdraw()
+v17.protocol("WM_DELETE_WINDOW", nope)
 v18.withdraw()
+v18.protocol("WM_DELETE_WINDOW", nope)
 v19.withdraw()
+v19.protocol("WM_DELETE_WINDOW", nope)
 v20.withdraw()
+v20.protocol("WM_DELETE_WINDOW", nope)
 v21.withdraw()
+v21.protocol("WM_DELETE_WINDOW", nope)
+
+
+USER_SELECTED_MODULARIZATION = False
+USER_HAS_CONSTRUCTED = False
+
 v0.mainloop()
