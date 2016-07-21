@@ -453,7 +453,7 @@ def mostrar2(v11,v12,v13):
 			break
 
 	file11 = file11 + '.txt'
-	print file11
+	print "Leyendo parametros tamano ventana y flujo maximo desde archivo \"%s\"" % file11
 	fin44 = open(file11, "r")
 	fin_list44 = fin44.read().splitlines()
 	fin44.close()	
@@ -477,6 +477,9 @@ def mostrar2(v11,v12,v13):
 
 	g = open('config','w')
 	g.write(NombreArchivo + '\n')
+
+        print "Configuracion  guardada:", configuracion
+        
 	g.close()
 	
 
@@ -1712,6 +1715,9 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 	else:
     		Segundos=10
 
+        if Segundos < 1:
+            Segundos = 10
+
 	y=np.round(Segundos)
 	
 	if y<=Segundos:
@@ -1945,6 +1951,8 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
     
 	#salida del programa una vez completadas todas las iteraciones del modelo
 
+
+        #print range(int(y))
 	return [T,Velocidadfluido,DeltaPresion,Potencia_Mecanica,Potencia_Electrica,Eficiencia,Ifluido,ma,mi,Tiempo_Simulacion,delta_T,Pot_Ventilador]
 
 
