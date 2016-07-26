@@ -16,6 +16,7 @@ import numpy as np
 import pylab as P
 import random
 import time
+from operator import itemgetter
 import tkMessageBox
 
 
@@ -1718,13 +1719,8 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
         if Segundos < 1:
             Segundos = 10
 
-	y=np.round(Segundos)
-	
-	if y<=Segundos:
-    		y=np.round(Segundos)
-
-	if y>Segundos:
-    		y=np.round(Segundos)-1
+	# y = min(np.floor(Segundos), 20)
+	y = np.floor(Segundos)
 
 
 	Grafico = []
@@ -1905,6 +1901,8 @@ def BancoTubosT_G(fluido,diametro,columnas,filas,altura,corriente,resistencia_in
 				u1[mm1,n] = u1[mm1,n] - 273.15
 
 		ma = max(U) #tmax
+		if ma - Grafico[t - 1] < 0.01:
+			break
 		mi = min(U) #tmin
 		delta_T = ma - mi  #deltaT
 		Tpelicula = (Tfluido_in - 273.15 + Tout - 273.15)/2	
@@ -2507,31 +2505,24 @@ def ffriction(Re,S):
 
 #Main del modelo de Jorge Reyes 
 
-def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
+def modelo(I, S, Flow, n_fluido, col_celda, col_fluido, Diam, Largo):
 
-	a = []
-	
-	for i in range(3):
-		a.append(0)
+	a = [0, 0, 0]
 
 	b1 = [0.039, 0.028, 0.027, 0.028, 0.005]
 	b2 = [3.270, 2.416, 2.907, 2.974, 2.063]
 	x = [0.1, 0.25, 0.5, 0.75, 1];
 
 	if S<x[0]:
-    		a1 = np.interp(S,[x[1],x[2]],[b1[1],b1[2]])
-    		a2 = np.interp(S,[x[1],x[2]],[b2[1],b2[2]])
+		a1 = np.interp(S,[x[1],x[2]],[b1[1],b1[2]])
+		a2 = np.interp(S,[x[1],x[2]],[b2[1],b2[2]])
 	elif  S>x[4]:
-    		a1 = b1[4]
-    		a2 = b2[4]
+		a1 = b1[4]
+		a2 = b2[4]
 	else:
-		a1 = np.interp(S,x,b1);
-		a2 = np.interp(S,x,b2);
-		if a1 <0:
-   			a1 = 0
-		elif a2 <0:
-   			a2 = 0
- 	a[0] = a1
+		a1 = max(np.interp(S,x,b1), 0);
+		a2 = max(np.interp(S,x,b2), 0);
+	a[0] = a1
 	a[1] = a2
 	a[2] = 0.653
 
@@ -2539,55 +2530,52 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 
 	r = 0.032                     #Resistencia interna [Ohm]
 	Flujo = Flow*0.00047          #Flujo de entrada del fluido [CFM]->[m3/s]
-	# Diam = 0.018                   #Diametro de celdas [m] --- cambiar segun corresponda
-	# Largo = 0.065                 #Largo de celdas [m]
-
 
 	#abre el archivo donde se encuentra la libreria de celdas
 
-	aa = poll()
-	#print aa 
-	v = ""+str(aa)
-	sel = list1.get(aa)
+	# aa = poll()
+	# #print aa 
+	# v = ""+str(aa)
+	# sel = list1.get(aa)
 
-	fin5 = open("listaCeldas.txt","r")
-	fin_list5 = fin5.read().splitlines()
-	fin5.close()
+	# fin5 = open("listaCeldas.txt","r")
+	# fin_list5 = fin5.read().splitlines()
+	# fin5.close()
 
-	file1 = fin_list5[0]
+	# file1 = fin_list5[0]
 	
-	#busca la celda elegida por el usuario en la libreria	
+	# #busca la celda elegida por el usuario en la libreria	
 
-	for i in range(0,len(fin_list5)):
+	# for i in range(0,len(fin_list5)):
 		
-		if sel == fin_list5[i]:
-			file1 = fin_list5[i] #revisar
-			break
+	# 	if sel == fin_list5[i]:
+	# 		file1 = fin_list5[i] #revisar
+	# 		break
 	
-	# print "file1   " +str(file1)
+	# # print "file1   " +str(file1)
 
-	fin4 = open(file1+".txt", "r")
-	fin_list4 = fin4.read().splitlines()
-	fin4.close()
+	# fin4 = open(file1+".txt", "r")
+	# fin_list4 = fin4.read().splitlines()
+	# fin4.close()
 
-	Diam = float(fin_list4[7])/1000
-	Largo = float(fin_list4[6])/1000
-	I = float(fin_list4[1])
+	# Diam = float(fin_list4[7])/1000
+	# Largo = float(fin_list4[6])/1000
+	# I = float(fin_list4[1])
 
-	vol = (np.power(Diam,2)*np.pi/4)*Largo     #Volumen celda [m3]
+	vol = (np.power(Diam, 2) * np.pi / 4.0) * Largo     #Volumen celda [m3]
 	e = 0.015                      #Espaciado entre pared y celda [m]
 	z = 0.005                       #Corte del estudio [m]
 	R = 286.9                     #Constante de los gases aire [J/kgK]
 	K = 1.4                        #K del aire 1,4
 	P_atm = 101325                 #Presion atmosferica [Pa]
-	Q_vol = np.power(I,2)*r/vol              #Calor volumetrico
-	q = Q_vol*(np.power(Diam,2)*np.pi/4)*z      #Calor total corte.
-	A_sup = np.pi*Diam*z  # /2
+	Q_vol = np.power(I , 2) * r / vol              #Calor volumetrico
+	q = Q_vol * (np.power(Diam, 2) * np.pi / 4) * z      #Calor total corte.
+	A_sup = np.pi * Diam * z  # /2
 
-	H = 2*e + Diam*n_fluido + S*Diam*(n_fluido-1)  #Altura del pack
-	A = H*z                                        #Area de entrada pack
-	A_vol = (S+1)*Diam*z                           #Area volumen control eje z
-	A_ent = (S)*Diam*z                             #Area entrada eje z
+	H = 2 * e + Diam * n_fluido + S * Diam * (n_fluido - 1)  #Altura del pack
+	A = H * z                                        #Area de entrada pack
+	A_vol = (S + 1) * Diam * z                           #Area volumen control eje z
+	A_ent = S * Diam *z                             #Area entrada eje z
 
 	T_fluido = []  # [C]
 	P_fluido = []  # [Pa]
@@ -2611,8 +2599,8 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 	for i in range(col_fluido):
 		T_fluido.append(20)
 		P_fluido.append(P_atm)
-		V_fluido.append((Flujo*z/Largo)/A)
-		Vm_fluido.append((Flujo*z/Largo)/A)
+		V_fluido.append((Flujo * z / Largo) / A)
+		Vm_fluido.append((Flujo* z / Largo) / A)
 		D_fluido.append(1.204)
 		F_fluido.append(0)
 		C.append(1)
@@ -2649,55 +2637,44 @@ def modelo(I,S,Flow,n_fluido,col_celda,col_fluido):
 	#Condiciones de Borde
 
 	T_fluido[0] = 20                           #Temperatura entrada [C]
-	Vinicio = a[1]*Flujo*(z/Largo)/A           #Velocidad entrada[m/s]
+	Vinicio = a[1] * Flujo * (z / Largo) / A           #Velocidad entrada[m/s]
 	D_fluido[0] = 1.204                        #Densidad de entrada [kg/m3]
-	P_fluido[col_fluido-1] = P_atm                       #Presion entrada [Pa]
+	P_fluido[col_fluido - 1] = P_atm                       #Presion entrada [Pa]
 	
-	Pa[0] = P_fluido[0]/((1+K)/(1+K*np.power(M[0],2)))
-	Da[0] = Pa[0]/(R*Ta[0])
+	Pa[0] = P_fluido[0] / ((1 + K)/(1 + K * np.power(M[0], 2)))
+	Da[0] = Pa[0] / (R * Ta[0])
 
 	D_fluido[0] = 1.204                        #[kg/m3]
-	m_punto = (S+1)*Diam*z*Vinicio*D_fluido[0] #[kg/s]
+	m_punto = (S + 1) * Diam * z * Vinicio * D_fluido[0] #[kg/s]
 	errv[0] = 0
 	errd[0] = 0
 	errf[0] = 0
 
 	for i in range(1,col_fluido):
-    		D_fluido[i] = D_fluido[0] - 0.204*(i)/col_celda
- 
-	#print D_fluido
-
-	#Ecuaciones - Ciclo
+		D_fluido[i] = D_fluido[0] - 0.204*(i) / col_celda
 
 
-	k=1
+	k = 1
 
 	errorp = []
 	errorv = []
-    	errortf = [] 
-    	errord = [] 
-    	errortc = [] 
+	errortf = [] 
+	errord = [] 
+	errortc = [] 
 
 	# Ciclo principal del modelo de desarrollado por Jorge Reyes 
 
 	while (max(error1)>errmax) or (max(errf)>errmax) or (max(errp)>errmax) or (max(errv)>errmax) or (max(errd)>errmax):
 	
-	# while k<2:	Por si se quiere hacer un ciclo corto y de prueba
-	
-			
 		#El primer valor del arreglo se calcula con formulas predefinidas 
-
-		cdrag = a[0]*cdr3(Rem[0])
-	
-		F_fluido[0] = 0.5*Diam*z*D_fluido[0]*np.power(Vinicio,2)*cdrag
-	
-    		errv[0] = V_fluido[0]
+		cdrag = a[0] * cdr3(Rem[0])
+		F_fluido[0] = 0.5 * Diam * z * D_fluido[0] * np.power(Vinicio, 2) * cdrag
+		errv[0] = V_fluido[0]
 
 		if m_punto > 0:
-    	    		V_fluido[0] = Vinicio - F_fluido[0]/m_punto
+			V_fluido[0] = Vinicio - F_fluido[0]/m_punto
 		else:
-			V_fluido[0] = 0		
-    		
+			V_fluido[0] = 0
 		if V_fluido[0]>0:
     			errv[0] = abs(errv[0] - V_fluido[0])/V_fluido[0]
 		else:
@@ -2862,7 +2839,7 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     col_celda = int(mod_list[1])
     col_fluido = int(mod_list[1]) + 1
 
-    max_repo_size = 200
+    max_repo_size = pop
 
     repo = []
     repoObj = []
@@ -3040,7 +3017,186 @@ def modelojorgereyes(pop, popvel, num_var, objectives, iteraciones, limiteUp, li
     return repo, repoObj
 	
 
-	
+def mopso(funcion_objetivo, pop, popvel, num_var, objectives, iteraciones, limiteUp, limiteDown):
+
+    counter = 0
+
+    max_repo_size = len(pop)
+
+    repo = []
+    repoObj = []
+    personalbest = pop
+    personalbestObj = objectives
+    numobj = 2
+
+    # inicio del ciclo por iteraciones
+
+    for j in range(int(iteraciones)):
+        print "iteracion %d" % j
+        print "repo: %d" % len(repo)
+        # update velocity: Con la poblacion creada, el primer paso es
+        # recalcular la velocidad de las partciculas
+
+        if j > 0:
+
+            w = 0.6
+            r1 = random.random()
+            r2 = random.random()
+
+            if len(repo) > 1:
+                h = random.randint(0, len(repo) - 1)
+            else:
+                h = 0
+            for i in range(len(pop)):
+                for j in range(num_var):
+                    if len(repo) > 0:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j]) + \
+                            r2 * (repo[h][j] - pop[i][j])
+                    else:
+                        popvel[i][j] = w * popvel[i][j] + r1 * \
+                            (personalbest[i][j] - pop[i][j])
+
+                    pop[i][j] = pop[i][j] + popvel[i][j]
+
+                    if pop[i][j] > limiteUp[j]:
+                        pop[i][j] = limiteUp[j]
+                    elif pop[i][j] < limiteDown[j]:
+                        pop[i][j] = limiteDown[j]
+
+        # evaluate solution: Obtener valores de funciones objetivo
+
+        for i in range(len(pop)):
+            S = pop[i][0]
+            Flow = pop[i][1]
+
+            [T, PMec] = funcion_objetivo(S, Flow)
+
+            Objetivo1 = T
+            Objetivo2 = PMec
+
+            objectives[i][0] = Objetivo1
+            objectives[i][1] = Objetivo2
+
+            f = open(workingDir2 + 'modelJor' + str(counter) + '.txt', 'w')
+            f.write("" + "id:" + str(counter) + ", " + str(pop[i][0]) + ", " + "" + str(
+                pop[i][1]) + "," + str(objectives[i][0]) + ", " + str(objectives[i][1]) + "\n")
+            f.close()
+            counter = counter + 1
+
+        # non dominated search: Busqueda de soluciones no dominadas en la
+        # poblacion y comparacion con anteriores que estan en el repositorio
+
+        cuenta = []
+        cuentaRepo = []
+
+        for i in range(len(pop)):
+            cuenta.append(0.0)
+
+        for i in range(len(pop)):
+            for j in range(len(pop)):
+
+                out = False
+                for k in range(numobj):
+                    if i == j:
+                        aa = 0
+                    else:
+
+                        if objectives[i][k] < objectives[j][k]:
+                            out = False
+                            break
+                        elif objectives[i][k] > objectives[j][k]:
+                            out = True
+
+                if out == True:
+                    cuenta[i] = cuenta[i] + 1
+
+        for i in range(len(pop)):
+            if cuenta[i] == 0:
+                c = []
+                d = []
+
+                for k in range(num_var):
+                    c.append(pop[i][k])
+
+                for j in range(numobj):
+                    d.append(objectives[i][j])
+
+                repo.append(c)
+                repoObj.append(d)
+
+        for i in range(len(repo)):
+            cuentaRepo.append(0.0)
+
+        if len(repo) > 1:
+            for i in range(len(repo)):
+                for j in range(len(repo)):
+
+                    outRepo = False
+                    for k in range(numobj):
+                        if i == j:
+                            aa = 0
+                        else:
+                            if repoObj[i][k] < repoObj[j][k]:
+                                out = False
+                                break
+                            elif repoObj[i][k] >= repoObj[j][k]:
+                                out = True
+
+                    if out == True:
+                        cuentaRepo[i] = cuentaRepo[i] + 1
+
+            for i in range(len(repo) - 1, -1, -1):
+                if cuentaRepo[i] > 0:
+                    del repo[i]
+                    del repoObj[i]
+
+        if len(repo) > max_repo_size:
+            surviving_indices = [random.randint(0, len(repo) - 1) for _ in range(max_repo_size)]
+            repo = [repo[i] for i in surviving_indices]
+            repoObj = [repoObj[i] for i in surviving_indices]
+
+        # update best: Actualizar la mejor solucion en el historial
+
+        respaldo = personalbest
+        respaldoobj = personalbestObj
+        personalbest = []
+        personalbestObj = []
+
+        for i in range(len(pop)):
+            out = False
+            for k in range(numobj):
+                if respaldoobj[i][k] < objectives[i][k]:
+                    out = False
+                    break
+                elif respaldoobj[i][k] > objectives[i][k]:
+                    out = True
+
+            if out == True:
+                e = []
+                f = []
+                for j in range(num_var):
+                    e.append(pop[i][j])
+                for l in range(numobj):
+                    f.append(objectives[i][l])
+
+                personalbestObj.append(f)
+                personalbest.append(e)
+            else:
+                g = []
+                h = []
+                for j in range(num_var):
+                    g.append(respaldo[i][j])
+                for l in range(numobj):
+                    h.append(respaldoobj[i][l])
+
+                personalbest.append(g)
+                personalbestObj.append(h)
+
+    print "objetivos" +str(objectives)
+    return repo, repoObj
+
+
 #CorrerModelo comunica el programa principal con los modelos.
 # Crea la poblacion inicial
 # Elige grilla o escalonado (y el modelo que corresponde)
@@ -3059,25 +3215,6 @@ def correrModelo(ventana,configuracion):
 
 
 
-	aa = poll3()
-	sel2 = list3.get(aa)
-	print sel2
-
-	# abre la lista de ventiladores y compara la seleccion con la lista para abrir el archivo de ventilador correcto
-
-	fin6 = open("listaVentiladores.txt")
-	fin_list6 = fin6.read().splitlines()
-	fin6.close()
-
-	file11 = fin_list6[0]
-
-	#busca la celda elegida por el usuario en la libreria	
-
-	for i in range(0,len(fin_list6)):
-		if sel2 == fin_list6[i]:
-			file11 = fin_list6[i] #revisar
-			break
-
 	file11 = list3.get(list3.curselection()[0])
 
 	fin44 = open(file11 + ".txt", "r")
@@ -3087,19 +3224,46 @@ def correrModelo(ventana,configuracion):
 	tamVentana = float(fin_list44[0]) #tamano ventana
 	maxFlujo = float(fin_list44[1]) #max Flujo
 
+	f = open('resultadosmodularizacion.txt', 'r')
+	mod_list = f.read().splitlines()
+	f.close()
+	n_fluido = int(mod_list[0]) + 1
+	col_celda = int(mod_list[1])
+	col_fluido = int(mod_list[1]) + 1
+
+	file12 = list1.get(list1.curselection()[0])
+	fin44 = open(file12 + ".txt", "r")
+	fin_list44 = fin44.read().splitlines()
+	fin44.close()
+
+	Diam = float(fin_list44[7])/1000
+	Largo = float(fin_list44[6])/1000
+	I = float(fin_list44[1])
+	Ah = float(fin_list44[2])
+
+	resistencia_interna = 0.032          # Resistencia celda [Ohm] podria variarse por datasheet
+	Tfluido_in = 273.15+20 
+
+	T0celdas = 273.15+20
+	dt = 1                             # Paso de simulacion [s]
+	Voltaje=3.3 
+
+	if configuracion == "escalonado":
+		funcion_objetivo = lambda S, Flow: modelo(I, S, Flow, n_fluido, col_celda, col_fluido, Diam, Largo)
+	if configuracion == "grilla":
+		funcion_objetivo = lambda S, Flow: itemgetter(7, 11)((BancoTubosT_G("aire", Diam, col_celda, n_fluido, Largo, I, resistencia_interna, Tfluido_in, Flow, T0celdas, S, S, Ah, Voltaje, dt)))
+
 	# Ajusta los limites de la poblacion para futuras iteraciones
 
 	print maxFlujo * 2118.880003
-	#raw_input("Press Enter to continue...")
 
 	limiteUp = [1.312,  maxFlujo * 2118.880003]
-	limiteDown = [1.001, 1.05]
+	limiteDown = [1.05, 1.05]
 
 	poblacion = vv13v1
 	iteraciones = vv13v2
-	
+	 
 	# creacion de la poblacion inicial
-	
 
 	for j in range(int(poblacion)):
 		pop.append([random.random() * (limiteUp[i] - limiteDown[i]) + limiteDown[i] for i in range(num_var)])
@@ -3109,51 +3273,21 @@ def correrModelo(ventana,configuracion):
 		h = []
 		for i in range(num_obj):
 			h.append(None)
-		
 		objectives.append(h)
 
+	[repoFin,repoObjFin] =  mopso(funcion_objetivo, pop, popvel, num_var, objectives, iteraciones, limiteUp, limiteDown)
+	repoOX = []
+	repoOY = []
 
-	#Eleccion de grilla o escalonado 	
-	if configuracion == "grilla":
-		[repoFin,repoObjFin] =  modelosebafuenzalida(pop,popvel,num_var,objectives,iteraciones,limiteUp,limiteDown)
-		#print "repoFin" + str(repoFin)
-		#print "repoObjFin" + str(repoObjFin)
+	for i in range(len(repoObjFin)):
+		repoOX.append(repoObjFin[i][0])
+		repoOY.append(repoObjFin[i][1])
 
-		repoOX = []
-		repoOY = []
-
-		for i in range(len(repoObjFin)):
-			repoOX.append(repoObjFin[i][0])
-			repoOY.append(repoObjFin[i][1])
-
-		P.plot(repoOX, repoOY,'bo')
-		P.xlabel('Temperatura (C)')
-		P.ylabel('Potencia Mecanica')
-		P.title('Frente de Pareto')
-		P.show()
-		
-	elif configuracion == "escalonado":
-		print "escalonado"
-		[repoFin,repoObjFin] = modelojorgereyes(pop,popvel,num_var,objectives,iteraciones,limiteUp,limiteDown)
-		#print "repoFin" + str(repoFin)
-		#print "repoObjFin" + str(repoObjFin)
-		
-		repoOX = []
-		repoOY = []
-
-		for i in range(len(repoObjFin)):
-			repoOX.append(repoObjFin[i][0])
-			repoOY.append(repoObjFin[i][1])
-
-		P.plot(repoOX, repoOY,'bo')
-		P.xlabel('Temperatura (C)')
-		P.ylabel('Potencia Mecanica')
-		P.title('Frente de Pareto')
-		P.show()
-		
-
-	else:
-		print "estoy aqui en el else"
+	P.plot(repoOX, repoOY,'bo')
+	P.xlabel('Temperatura (C)')
+	P.ylabel('Potencia Mecanica')
+	P.title('Frente de Pareto')
+	P.show()
 
 	print "terminado"
 	#print repoFin
