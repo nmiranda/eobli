@@ -354,10 +354,10 @@ def reiniciar(ventana):
 
 def ocultar(ventana):
 
-	if ventana is v2:
-		if USER_SELECTED_MODULARIZATION == False:
-			tkMessageBox.showerror("Error de modularización", "Por favor, seleccione y guarde una configuración de modularización.")
-			return
+	#if ventana is v2:
+	#	if USER_SELECTED_MODULARIZATION == False:
+	#		tkMessageBox.showerror("Error de modularización", "Por favor, seleccione y guarde una configuración de modularización.")
+	#		return
 	ventana.withdraw()
 
 def ejecutar(f): v0.after(200,f)
@@ -3533,7 +3533,10 @@ def guardarv9(ventana):
 					
 				diferencia.append(tamVentana*kk - dimensionX)
 
-		
+                if not diferencia:
+                    tkMessageBox.showerror("Error de dimensionamiento", "El tipo de celda seleccionada excede las dimensiones del banco. Por favor volver al paso 1 y seleccionar otra celda.")
+                    return
+                                
 		index1 = diferencia.index(min(diferencia))
 		numeroVent = kk
 		arregloEsc = alternativas[index1]
@@ -3671,6 +3674,10 @@ def guardarv9(ventana):
 					diferencia.append(120*kk - dimensionX)
 
 	
+                if not diferencia:
+                    tkMessageBox.showerror("Error de dimensionamiento", "El tipo de celda seleccionada excede las dimensiones del banco. Por favor volver al paso 1 y seleccionar otra celda.")
+                    return
+                
 		index1 = diferencia.index(min(diferencia))
 		arregloEsc = alternativas[index1]
 		numeroVent = kk
